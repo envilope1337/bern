@@ -144,7 +144,19 @@ def run_part(part, base, shots):
 
                 # тест: первый ответ неверный и двойным нажатием, остальные верные
                 expect(page.locator(".tab.is-current")).to_have_text("Тест")
-                page.get_by_role("button", name="Начать тест").click()
+                # на устройстве остался результат прежней версии теста, где вопросов было больше:
+                # он не должен стать «лучшим» для нового теста
+                page.evaluate(
+                    """([id, total]) => {
+                      const s = JSON.parse(localStorage.getItem('bern-progress-v1'));
+                      s.quiz[id] = { best: total, last: total, total: total };
+                      localStorage.setItem('bern-progress-v1', JSON.stringify(s));
+                    }""",
+                    [uid, n + 5],
+                )
+                page.reload()
+                expect(body).to_contain_text(f"Лучший результат: {n + 5} из {n + 5}")
+                page.get_by_role("button", name="Пройти тест ещё раз").click()
                 for i in range(n):
                     expect(body.locator(".muted").first).to_have_text(f"Вопрос {i + 1} из {n}")
                     right = page.evaluate(CORRECT_JS, page.locator(".question").inner_text())

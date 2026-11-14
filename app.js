@@ -550,8 +550,10 @@
       var total = session.list.length;
       var right = total - session.wrong.length;
       if (session.full) {
+        // Результат прежней версии теста с другим числом вопросов с новым не сравнить.
         var prev = state.quiz[quizId];
-        state.quiz[quizId] = { best: Math.max(right, prev ? prev.best : 0), last: right, total: total };
+        var prevBest = prev && prev.total === total ? prev.best : 0;
+        state.quiz[quizId] = { best: Math.max(right, prevBest), last: right, total: total };
       }
       forget();
       root.appendChild(el('h2', { text: 'Результат: ' + right + ' из ' + total }));
