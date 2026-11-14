@@ -2,6 +2,9 @@
 //   node tools/check-content.js                 — все правила, код выхода 1 при любом замечании
 //   node tools/check-content.js --dump <файл>   — весь текст материала одним файлом для сканера
 //   node tools/check-content.js --blind <id> <файл> — вопросы без отметки верного ответа
+//   node tools/check-content.js --grade <id> <файл> — сверить ответы решавшего вслепую с ключом
+//   ключ --only <id> в любом режиме берёт один файл content/<id>.js: так главу проверяют,
+//   пока соседние файлы пишут другие исполнители
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -10,6 +13,8 @@ const { execSync } = require('child_process');
 const root = path.resolve(__dirname, '..');
 const args = process.argv.slice(2);
 const RU = 'а-яёА-ЯЁ';
+let only = null;
+if (args.includes('--only')) only = args.splice(args.indexOf('--only'), 2)[1];
 
 // ---------- загрузка ----------
 
@@ -21,7 +26,8 @@ function run(file) {
 run('content/book.js');
 ctx.BOOK = ctx.window.BOOK;
 const SERVICE = ['book.js', 'files.js'];
-const files = fs.readdirSync(path.join(root, 'content')).filter((f) => f.endsWith('.js') && !SERVICE.includes(f)).sort();
+const files = fs.readdirSync(path.join(root, 'content'))
+  .filter((f) => f.endsWith('.js') && !SERVICE.includes(f) && (!only || f === only + '.js')).sort();
 files.forEach((f) => run('content/' + f));
 const BOOK = ctx.BOOK;
 
@@ -76,6 +82,28 @@ if (args[0] === '--blind') {
   fs.writeFileSync(args[2], JSON.stringify(blind, null, 2), 'utf8');
   console.log('вопросов без ответов:', blind.length, '→', args[2]);
   process.exit(0);
+}
+
+if (args[0] === '--grade') {
+  const quiz = quizzes.find((x) => x.id === args[1]);
+  if (!quiz) { console.error('нет теста с id', args[1]); process.exit(2); }
+  const answers = JSON.parse(fs.readFileSync(args[2], 'utf8'));
+  let bad = 0;
+  quiz.list.forEach((q, i) => {
+    const given = answers.find((a) => a.n === i + 1);
+    const key = q.options[q.correct].t;
+    if (!given) { bad += 1; console.log('вопрос ' + (i + 1) + ': нет ответа'); return; }
+    if (given.answer !== key) {
+      bad += 1;
+      console.log('вопрос ' + (i + 1) + ': ответ не совпал с ключом\n  вопрос: ' + q.q + '\n  ключ: ' + key + '\n  решавший: ' + given.answer + '\n  довод: ' + (given.note || ''));
+    }
+    if (given.also && given.also.length) {
+      bad += 1;
+      console.log('вопрос ' + (i + 1) + ': решавший считает верными ещё и: ' + given.also.join(' | ') + '\n  вопрос: ' + q.q + '\n  довод: ' + (given.note || ''));
+    }
+  });
+  console.log(args[1] + ': спорных вопросов ' + bad + ' из ' + quiz.list.length);
+  process.exit(bad ? 1 : 0);
 }
 
 // ---------- правила ----------
@@ -198,15 +226,17 @@ Object.values(BOOK.units).forEach((u) => (u.cards || []).forEach((c) => {
 
 // 9. Список глав для страницы совпадает с файлами
 const listPath = path.join(root, 'content', 'files.js');
-if (fs.existsSync(listPath)) {
+if (!only && fs.existsSync(listPath)) {
   run('content/files.js');
   const listed = (ctx.self.BOOK_FILES || []).map((id) => id + '.js').sort();
   files.forEach((f) => { if (!listed.includes(f)) say('content/files.js', 'нет файла ' + f + ': глава не попадёт на страницу'); });
   listed.forEach((f) => { if (!files.includes(f)) say('content/files.js', 'в списке есть ' + f + ', а файла нет'); });
 }
-BOOK.sections.forEach((s) => s.units.forEach((id) => {
-  if (!BOOK.units[id]) say('content/book.js', 'в разделе ' + s.id + ' указана глава ' + id + ', а её нет');
-}));
+if (!only) {
+  BOOK.sections.forEach((s) => s.units.forEach((id) => {
+    if (!BOOK.units[id]) say('content/book.js', 'в разделе ' + s.id + ' указана глава ' + id + ', а её нет');
+  }));
+}
 
 // ---------- итог ----------
 
