@@ -135,6 +135,33 @@ quizzes.forEach(({ label, list }) => {
   if (list.length >= 6 && cases < list.length / 2) say(label, 'вопросов-ситуаций ' + cases + ' из ' + list.length + ', нужно не меньше половины');
 });
 
+// 10. Форма не выдаёт ответ: слова-абсолюты и оговорки стоят в верных и неверных вариантах
+// одинаково часто. Грубая сетка: нелепые варианты и пересказ условия ловит только решение
+// теста без книги (шаг конвейера), это правило его не заменяет.
+const ABSOLUTE = /(^|[^а-яё])(всегда|никогда|только|лишь|никто|ничего|ничто|никак|навсегда|ровно|постоянно|обязательно|вообще|полностью|никак(ой|ая|ое|ие|ого|их|ую)|люб(ой|ая|ое|ые|ого|ую|ых|ым))(?![а-яё])/i;
+const HEDGE = /(^|[^а-яё])(может|могут|обычно|бывает|бывают|иногда|порой|часто|чаще|в основном|как правило|скорее)(?![а-яё])/i;
+quizzes.forEach(({ label, list }) => {
+  const n = list.length;
+  if (n < 6) return;
+  const hits = { absRight: 0, absWrong: 0, hedgeRight: 0, hedgeWrong: 0 };
+  list.forEach((q) => {
+    if (!Array.isArray(q.options) || !q.options[q.correct]) return;
+    q.options.forEach((o, j) => {
+      const side = j === q.correct ? 'Right' : 'Wrong';
+      if (ABSOLUTE.test(o.t)) hits['abs' + side] += 1;
+      if (HEDGE.test(o.t)) hits['hedge' + side] += 1;
+    });
+  });
+  if (hits.absWrong / (3 * n) - hits.absRight / n > 0.1) {
+    say(label, 'слова вроде «всегда», «только», «никак» стоят в ' + hits.absWrong + ' неверных вариантах из ' + 3 * n +
+      ' и в ' + hits.absRight + ' верных из ' + n + ': неверные снимаются по форме');
+  }
+  if (hits.hedgeRight / n - hits.hedgeWrong / (3 * n) > 0.1) {
+    say(label, 'оговорки вроде «может», «обычно», «бывает» стоят в ' + hits.hedgeRight + ' верных вариантах из ' + n +
+      ' и в ' + hits.hedgeWrong + ' неверных из ' + 3 * n + ': верный узнаётся по осторожному тону');
+  }
+});
+
 // 2. id: уникальны и не пропадают относительно последнего коммита
 const ids = new Map();
 Object.values(BOOK.units).forEach((u) => {
