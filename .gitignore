@@ -16,6 +16,7 @@ node_modules/
 *.mp4
 *.mp3
 *.mov
+source/
 API-KEYS.md
 credentials.json
 local-crons.json
