@@ -254,10 +254,12 @@
       root.appendChild(head);
 
       if (a.n) {
+        // side — с какой стороны от стрелки цифра, at — доля пути от начала стрелки.
         var side = a.side || (shift >= 0 ? 1 : -1);
+        var at = a.at || 0.4;
         var num = svg('text', {
-          x: s.x + ux * len * 0.4 + nx * 11 * side,
-          y: s.y + uy * len * 0.4 + ny * 11 * side + 4,
+          x: s.x + ux * len * at + nx * 11 * side,
+          y: s.y + uy * len * at + ny * 11 * side + 4,
           'text-anchor': 'middle'
         });
         num.setAttribute('class', 'dia-num');
