@@ -204,9 +204,14 @@ Object.values(BOOK.units).forEach((u) => {
   const srcPath = path.join(root, 'source', 'text', u.id + '.txt');
   if (!fs.existsSync(srcPath)) return;
   const src = fs.readFileSync(srcPath, 'utf8');
+  // Конспект — опора для повторения, а не замена книги: читатель главу уже прочёл.
   const own = notesText(u, false).join(' ');
-  const limit = Math.max(4000, Math.round(src.length / 3));
-  if (own.length > limit) say(u.id, 'конспект без строк «Проще» ' + own.length + ' знаков, предел ' + limit + ' (треть главы, но не меньше 4000)');
+  const all = notesText(u, true).join(' ');
+  const share = src.length < 10000 ? 0.3 : 0.25;
+  const limit = Math.round(src.length * share);
+  const limitAll = Math.round(src.length * 0.4);
+  if (own.length > limit) say(u.id, 'конспект без строк «Проще» ' + own.length + ' знаков, предел ' + limit + ' (' + share * 100 + '% главы)');
+  if (all.length > limitAll) say(u.id, 'конспект вместе с «Проще» ' + all.length + ' знаков, предел ' + limitAll + ' (40% главы)');
   const srcWords = words(src);
   const grams = new Set();
   for (let i = 0; i + RUN <= srcWords.length; i++) grams.add(srcWords.slice(i, i + RUN).join(' '));
