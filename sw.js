@@ -1,4 +1,6 @@
 // Сначала сеть, при её отсутствии сохранённая копия: в сети всегда свежие главы, без сети работает последняя загруженная версия.
+importScripts('content/files.js');
+
 var CACHE = 'bern-v1';
 var FILES = [
   './',
@@ -8,11 +10,8 @@ var FILES = [
   'manifest.webmanifest',
   'icons/icon-192.png',
   'content/book.js',
-  'content/intro.js',
-  'content/ch1.js',
-  'content/ch2.js',
-  'content/part1.js'
-];
+  'content/files.js'
+].concat(self.BOOK_FILES.map(function (id) { return 'content/' + id + '.js'; }));
 
 self.addEventListener('install', function (event) {
   event.waitUntil(caches.open(CACHE).then(function (cache) { return cache.addAll(FILES); }));

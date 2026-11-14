@@ -13,6 +13,7 @@
   var GRADES = ['Снова', 'Трудно', 'Хорошо', 'Легко'];
   var app = document.getElementById('app');
   var storageWorks = true;
+  var contentFailed = false;
   var state = loadState();
 
   // ---------- хранение прогресса ----------
@@ -31,6 +32,7 @@
     s.quiz = s.quiz || {};
     s.write = s.write || {};
     s.cards = s.cards || {};
+    s.session = s.session || {};
     return s;
   }
 
@@ -305,6 +307,13 @@
       }));
     }
 
+    if (contentFailed) {
+      app.appendChild(el('p', {
+        class: 'notice',
+        text: 'Часть глав не загрузилась. Проверь интернет и обнови страницу.'
+      }));
+    }
+
     var due = dueCards(unitIds(), false).length;
     var today = el('section', { class: 'today' });
     if (due) {
@@ -445,8 +454,36 @@
       })]));
     }
 
+    // Начатый тест хранится на устройстве: телефон может выгрузить вкладку посреди теста.
+    function remember(pos) {
+      var index = function (q) { return questions.indexOf(q); };
+      state.session[quizId] = {
+        total: questions.length,
+        order: session.list.map(index),
+        wrong: session.wrong.map(index),
+        pos: pos,
+        full: session.full
+      };
+      saveState();
+    }
+
+    function forget() {
+      delete state.session[quizId];
+      saveState();
+    }
+
+    function restore() {
+      var saved = state.session[quizId];
+      if (!saved || saved.total !== questions.length) return false;
+      var pick = function (i) { return questions[i]; };
+      if (!saved.order.concat(saved.wrong).every(pick)) return false;
+      session = { list: saved.order.map(pick), pos: saved.pos, wrong: saved.wrong.map(pick), full: saved.full };
+      return true;
+    }
+
     function start(list) {
       session = { list: shuffle(list), pos: 0, wrong: [], full: list.length === questions.length };
+      remember(0);
       ask();
     }
 
@@ -479,6 +516,7 @@
           btn.appendChild(el('span', { class: 'option-tag', text: 'твой ответ' }));
           session.wrong.push(q);
         }
+        remember(session.pos + 1);
         feedback.appendChild(el('p', { class: 'verdict ' + (ok ? 'is-ok' : 'is-bad'), text: ok ? 'Верно' : 'Неверно' }));
         if (!ok) {
           feedback.appendChild(el('p', {}, [el('strong', { text: 'Почему не этот вариант. ' }), q.options[idx].why]));
@@ -512,8 +550,8 @@
       if (session.full) {
         var prev = state.quiz[quizId];
         state.quiz[quizId] = { best: Math.max(right, prev ? prev.best : 0), last: right, total: total };
-        saveState();
       }
+      forget();
       root.appendChild(el('h2', { text: 'Результат: ' + right + ' из ' + total }));
       var wrong = session.wrong;
       if (wrong.length) {
@@ -545,7 +583,9 @@
       root.appendChild(el('p', { class: 'muted', text: 'Для этой главы теста пока нет.' }));
       return;
     }
-    intro();
+    if (!restore()) intro();
+    else if (session.pos >= session.list.length) finish();
+    else ask();
   }
 
   // ---------- письменные вопросы ----------
@@ -792,8 +832,25 @@
     else viewHome();
   }
 
+  // Главы грузятся по списку из content/files.js, тем же списком пользуется sw.js.
+  function loadContent(ids, done) {
+    var left = ids.length;
+    if (!left) { done(); return; }
+    ids.forEach(function (id) {
+      var script = document.createElement('script');
+      script.src = 'content/' + id + '.js';
+      script.async = false;
+      script.onload = script.onerror = function (event) {
+        if (event.type === 'error') contentFailed = true;
+        left -= 1;
+        if (!left) done();
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   window.addEventListener('hashchange', route);
-  route();
+  loadContent(self.BOOK_FILES || [], route);
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch(function () {});

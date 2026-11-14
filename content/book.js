@@ -1,5 +1,5 @@
 // Оглавление. Новая глава: файл content/<id>.js с BOOK.unit({...}),
-// строка в units нужного раздела ниже, тег <script> в index.html и путь в списке FILES в sw.js.
+// её id в units нужного раздела ниже и в списке content/files.js.
 window.BOOK = {
   title: 'Берн. Игры, в которые играют люди',
   sections: [
