@@ -202,6 +202,35 @@ Object.values(BOOK.units).forEach((u) => {
   });
 });
 
+// 11. Разбор игры: поля блока, название из словаря, карточка с названием игры и не меньше
+// двух вопросов теста с пометкой game: '<название>'
+const GAME_KEYS = ['name', 'abbr', 'thesis', 'aim', 'roles', 'dynamics', 'examples', 'social', 'psychological',
+  'moves', 'advantages', 'antithesis', 'related'];
+const GAME_LISTS = ['examples', 'moves', 'advantages'];
+const bare = (s) => String(s).replace(/[«»]/g, '').trim().toLowerCase();
+Object.values(BOOK.units).forEach((u) => {
+  const games = (u.notes || []).filter((b) => b.game).map((b) => b.game);
+  games.forEach((g) => {
+    const where = u.id + ', игра «' + (g.name || '?') + '»';
+    if (!g.name || !g.thesis) { say(where, 'у разбора игры нет названия или тезиса'); return; }
+    Object.keys(g).forEach((k) => {
+      if (!GAME_KEYS.includes(k)) { say(where, 'неизвестное поле ' + k); return; }
+      const isList = GAME_LISTS.includes(k);
+      const ok = isList ? Array.isArray(g[k]) && g[k].every((x) => typeof x === 'string') : typeof g[k] === 'string';
+      if (!ok) say(where, 'поле ' + k + (isList ? ' должно быть списком строк' : ' должно быть строкой'));
+    });
+    if (glossary && ![...glossary].some((t) => bare(t) === bare(g.name))) say(where, 'названия игры нет в docs/glossary.md');
+    if (!(u.cards || []).some((c) => bare(c.q).includes(bare(g.name)))) say(where, 'нет карточки с названием игры');
+    const asked = (u.quiz || []).filter((q) => q.game === g.name).length;
+    if (asked < 2) say(where, 'вопросов теста с пометкой game: ' + asked + ', нужно не меньше двух');
+  });
+  (u.quiz || []).forEach((q, i) => {
+    if (q.game && !games.some((g) => g.name === q.game)) {
+      say(u.id + ', вопрос ' + (i + 1), 'пометка game «' + q.game + '» не совпадает ни с одним разбором игры в главе');
+    }
+  });
+});
+
 // 6. Обращение к читателю и эталонные ответы без рода (реплики в «…» не считаются)
 const NOUNS = ['дела', 'тела', 'числа', 'стола', 'угла', 'зла', 'села', 'школа', 'сила', 'правила', 'начала', 'стимул', 'сигнал', 'материал'];
 const genderVerb = new RegExp('(?<![' + RU + '])(ты|я)\\s+(?:[' + RU + ']+[,:]?\\s+){0,4}?([' + RU + ']{3,}(?:л|ла|лся|лась))(?![' + RU + '])', 'gi');

@@ -190,6 +190,44 @@ a { color: var(--adult); }
 .dia-head { fill: var(--ink); }
 .dia-num { font-family: var(--ui); font-size: 13px; font-weight: 700; fill: var(--ink); }
 
+/* ---------- разбор игры ---------- */
+
+.game-list { font-family: var(--ui); margin: 0 0 24px; }
+.game-list-title { font-size: 15px; color: var(--ink-soft); margin: 0 0 6px; }
+.game-list ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.game-list li { margin: 0; border-bottom: 1px solid var(--line); }
+.game-jump {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--adult);
+  font: 18px/1.3 var(--read);
+  text-align: left;
+  cursor: pointer;
+}
+.game-jump:hover { text-decoration: underline; }
+
+.game {
+  background: var(--surface);
+  border-left: 4px solid var(--adult);
+  padding: 14px 16px 4px;
+  margin: 0 0 16px;
+  scroll-margin-top: 64px;
+}
+.game.is-current { outline: 2px solid var(--adult); }
+.game-name { font-size: 20px; color: var(--adult); margin-bottom: 8px; }
+.game-name:focus { outline: none; }
+.game-more { border-top: 1px solid var(--line); margin-bottom: 8px; }
+.game-more summary { padding: 12px 0; font: 600 16px/1.3 var(--ui); cursor: pointer; }
+.game-more dl { margin: 2px 0 0; }
+.game-more dt { font: 600 15px/1.3 var(--ui); color: var(--ink-soft); margin-bottom: 2px; }
+.game-more dd { margin: 0 0 14px; }
+.game-more dd ul, .game-more dd ol { margin: 0; }
+.game-more dd li:last-child { margin-bottom: 0; }
+
 /* ---------- кнопки ---------- */
 
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 0; }

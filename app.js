@@ -384,8 +384,69 @@
     if (tab === 'cards') renderUnitCards(body, unit);
   }
 
+  // Разбор игры по схеме Берна: название и тезис видны сразу, остальные пункты раскрываются.
+  var GAME_FIELDS = [
+    ['aim', 'Цель'], ['roles', 'Роли'], ['dynamics', 'Динамика'], ['examples', 'Примеры'],
+    ['social', 'Социальная парадигма'], ['psychological', 'Психологическая парадигма'],
+    ['moves', 'Ходы'], ['advantages', 'Вознаграждения'], ['antithesis', 'Антитезис'],
+    ['related', 'Родственные игры']
+  ];
+
+  function gameTitle(game) {
+    return '«' + game.name + '»' + (game.abbr ? ' (' + game.abbr + ')' : '');
+  }
+
+  function gameBlock(game, index) {
+    var rows = [];
+    GAME_FIELDS.forEach(function (field) {
+      var value = game[field[0]];
+      if (!value || !value.length) return;
+      rows.push(el('dt', { text: field[1] }));
+      if (Array.isArray(value)) {
+        rows.push(el('dd', {}, [el(field[0] === 'moves' ? 'ol' : 'ul', {}, value.map(function (item) {
+          return el('li', { text: item });
+        }))]));
+      } else {
+        rows.push(el('dd', { text: value }));
+      }
+    });
+    return el('section', { class: 'game', id: 'game-' + index }, [
+      el('h3', { class: 'game-name', tabindex: '-1', text: gameTitle(game) }),
+      el('p', {}, [el('strong', { text: 'Тезис. ' }), game.thesis]),
+      rows.length ? el('details', { class: 'game-more' }, [
+        el('summary', { text: 'Разбор по схеме Берна' }),
+        el('dl', {}, rows)
+      ]) : null
+    ]);
+  }
+
+  function gameList(games) {
+    return el('nav', { class: 'game-list', 'aria-label': 'Игры этой главы' }, [
+      el('p', { class: 'game-list-title', text: 'Игры этой главы' }),
+      el('ul', {}, games.map(function (game, index) {
+        return el('li', {}, [el('button', {
+          class: 'game-jump',
+          type: 'button',
+          text: gameTitle(game),
+          onclick: function () {
+            // Игры в конце страницы до верха не докручиваются: выбранный разбор обводим.
+            var target = document.getElementById('game-' + index);
+            Array.prototype.forEach.call(document.querySelectorAll('.game.is-current'), function (node) {
+              node.classList.remove('is-current');
+            });
+            target.classList.add('is-current');
+            target.scrollIntoView();
+            target.querySelector('.game-name').focus({ preventScroll: true });
+          }
+        })]);
+      }))
+    ]);
+  }
+
   function renderNotes(root, unit) {
     var article = el('article', { class: 'notes' });
+    var games = (unit.notes || []).filter(function (b) { return b.game; }).map(function (b) { return b.game; });
+    if (games.length > 1) article.appendChild(gameList(games));
     (unit.notes || []).forEach(function (b) {
       if (b.h) article.appendChild(el('h2', { text: b.h }));
       else if (b.p) article.appendChild(el('p', { text: b.p }));
@@ -403,6 +464,8 @@
         ]));
       } else if (b.dia) {
         article.appendChild(diagram(b.dia));
+      } else if (b.game) {
+        article.appendChild(gameBlock(b.game, games.indexOf(b.game)));
       }
     });
     root.appendChild(article);

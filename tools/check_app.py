@@ -46,6 +46,7 @@ INFO_JS = """() => {
     book: BOOK.title, ids, titles: ids.map(id => BOOK.units[id].title),
     id: u.id, title: u.title, quiz: u.quiz.length, cards: u.cards.map(c => c.id),
     points: u.write[0].points.length,
+    games: u.notes.filter(b => b.game).map(b => b.game.name),
     section: sec ? sec.id : null,
     sectionQuiz: sec ? BOOK.sectionQuiz[sec.id].length : 0,
   };
@@ -138,6 +139,39 @@ def run_part(part, base, shots):
                 page.locator(f'a.row[href="#/u/{uid}/notes"]').click()
                 expect(page.locator("h1")).to_have_text(info["title"])
                 step("02-notes")
+
+                # разбор игры: список игр ведёт к нужному разбору, разбор раскрывается и сворачивается
+                games = info["games"]
+                if games:
+                    last = len(games) - 1
+                    if last > 0:
+                        jump = page.locator(".game-jump").nth(last)
+                        expect(jump).to_contain_text(f"«{games[last]}»")
+                        jump.click()
+                    game = page.locator(f"#game-{last}")
+                    if last > 0:
+                        expect(page.locator(".game.is-current")).to_have_count(1)
+                        expect(game).to_have_class("game is-current")
+                    expect(game.locator(".game-name")).to_contain_text(games[last])
+                    expect(game.locator(".game-name")).to_be_in_viewport()
+                    under_tabs = page.evaluate(
+                        """(i) => {
+                          const h = document.querySelector('#game-' + i + ' .game-name').getBoundingClientRect();
+                          const t = document.querySelector('.tabs').getBoundingClientRect();
+                          return h.top < t.bottom - 1;
+                        }""",
+                        last,
+                    )
+                    if under_tabs:
+                        problems.append(f"{part} разбор игры: название ушло под вкладки")
+                    more = game.locator("details")
+                    expect(more.locator("dl")).to_be_hidden()
+                    more.locator("summary").click()
+                    expect(more.locator("dl")).to_be_visible()
+                    step("02-game-open")
+                    more.locator("summary").click()
+                    expect(more.locator("dl")).to_be_hidden()
+
                 page.get_by_role("button", name="Отметить прочитанным").click()
                 expect(page.locator(".done-line")).to_have_text("Конспект отмечен прочитанным")
                 page.get_by_role("link", name="Перейти к тесту").click()
