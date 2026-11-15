@@ -205,8 +205,8 @@ Object.values(BOOK.units).forEach((u) => {
 // 11. Разбор игры: поля блока, название из словаря, карточка с названием игры и не меньше
 // двух вопросов теста с пометкой game: '<название>'
 const GAME_KEYS = ['name', 'abbr', 'thesis', 'aim', 'roles', 'dynamics', 'examples', 'social', 'psychological',
-  'moves', 'advantages', 'antithesis', 'related'];
-const GAME_LISTS = ['examples', 'moves', 'advantages'];
+  'moves', 'advantages', 'antithesis', 'variants', 'related'];
+const GAME_LISTS = ['examples', 'moves', 'advantages', 'variants'];
 const bare = (s) => String(s).replace(/[«»]/g, '').trim().toLowerCase();
 Object.values(BOOK.units).forEach((u) => {
   const games = (u.notes || []).filter((b) => b.game).map((b) => b.game);

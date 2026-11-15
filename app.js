@@ -389,7 +389,7 @@
     ['aim', 'Цель'], ['roles', 'Роли'], ['dynamics', 'Динамика'], ['examples', 'Примеры'],
     ['social', 'Социальная парадигма'], ['psychological', 'Психологическая парадигма'],
     ['moves', 'Ходы'], ['advantages', 'Вознаграждения'], ['antithesis', 'Антитезис'],
-    ['related', 'Родственные игры']
+    ['variants', 'Варианты'], ['related', 'Родственные игры']
   ];
 
   function gameTitle(game) {
