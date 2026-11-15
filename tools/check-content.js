@@ -3,6 +3,7 @@
 //   node tools/check-content.js --dump <файл>   — весь текст материала одним файлом для сканера
 //   node tools/check-content.js --blind <id> <файл> — вопросы без отметки верного ответа
 //   node tools/check-content.js --grade <id> <файл> — сверить ответы решавшего вслепую с ключом
+//   node tools/check-content.js --quotes        — цитаты в кавычках, которых нет в тексте главы
 //   ключ --only <id> в любом режиме берёт один файл content/<id>.js: так главу проверяют,
 //   пока соседние файлы пишут другие исполнители
 const fs = require('fs');
@@ -104,6 +105,39 @@ if (args[0] === '--grade') {
   });
   console.log(args[1] + ': спорных вопросов ' + bad + ' из ' + quiz.list.length);
   process.exit(bad ? 1 : 0);
+}
+
+if (args[0] === '--quotes') {
+  // Цитата в кавычках из трёх слов и длиннее должна стоять в тексте главы (source/text/<id>.txt,
+  // в git его нет). Слова сравниваются по основе: падеж и число цитату не ломают. Условия и
+  // варианты теста не проверяются: в ситуациях реплики героев придуманы.
+  const stem = (w) => w.slice(0, Math.max(4, w.length - 2));
+  const norm = (s) => s.toLowerCase().replace(/ё/g, 'е').replace(/[^а-яa-z0-9]+/g, ' ').trim()
+    .split(' ').filter(Boolean).map(stem).join(' ');
+  let miss = 0;
+  Object.values(BOOK.units).forEach((u) => {
+    const src = path.join(root, 'source', 'text', u.id + '.txt');
+    if (!fs.existsSync(src)) { console.log(u.id + ': нет текста главы ' + src); return; }
+    const book = ' ' + norm(fs.readFileSync(src, 'utf8')) + ' ';
+    const texts = [];
+    const walk = (x) => {
+      if (typeof x === 'string') texts.push(x);
+      else if (Array.isArray(x)) x.forEach(walk);
+      else if (x && typeof x === 'object') Object.values(x).forEach(walk);
+    };
+    walk(u.notes);
+    walk((u.cards || []).map((c) => c.a));
+    walk((u.write || []).map((w) => [w.model, w.points]));
+    walk((u.quiz || []).map((q) => [q.explain, q.options.map((o) => o.why || '')]));
+    texts.forEach((t) => (t.match(/«[^«»]+»/g) || []).forEach((q) => {
+      const n = norm(q);
+      if (n.split(' ').length < 3 || book.includes(' ' + n + ' ')) return;
+      miss += 1;
+      console.log(u.id + ': цитаты нет в тексте главы ' + q);
+    }));
+  });
+  console.log('цитат не из текста: ' + miss);
+  process.exit(miss ? 1 : 0);
 }
 
 // ---------- правила ----------
