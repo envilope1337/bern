@@ -1,3 +1,3 @@
 // Единственный список файлов глав: по нему их грузит страница (app.js) и сохраняет
 // для работы без сети sw.js. Тест по разделу стоит после своих глав.
-self.BOOK_FILES = ['intro', 'ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'part1', 'part2-intro', 'ch6', 'ch7', 'ch8', 'ch9', 'ch10'];
+self.BOOK_FILES = ['intro', 'ch1', 'ch2', 'ch3', 'ch4', 'ch5', 'part1', 'part2-intro', 'ch6', 'ch7', 'ch8', 'ch9', 'ch10', 'ch11'];
