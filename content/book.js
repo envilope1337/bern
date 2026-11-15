@@ -5,7 +5,7 @@ window.BOOK = {
   sections: [
     { id: 'intro', title: 'Введение', units: ['intro'] },
     { id: 'part1', title: 'Часть 1. Анализ игр', units: ['ch1', 'ch2', 'ch3', 'ch4', 'ch5'] },
-    { id: 'part2', title: 'Часть 2. Тезаурус игр', units: ['part2-intro', 'ch6', 'ch7', 'ch8'] }
+    { id: 'part2', title: 'Часть 2. Тезаурус игр', units: ['part2-intro', 'ch6', 'ch7', 'ch8', 'ch9'] }
   ],
   units: {},
   sectionQuiz: {},
