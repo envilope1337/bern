@@ -45,7 +45,9 @@ function notesText(unit, withSimple) {
     else if (b.term) out.push(b.term + '. ' + b.def + (withSimple && b.simple ? ' ' + b.simple : ''));
     else if (b.ex) out.push(b.ex);
     else if (b.dia) out.push(b.dia.caption || '');
-    else if (b.game) out.push(Object.values(b.game).flat().filter((v) => typeof v === 'string').join(' '));
+    // Название игры в кавычках: правило рода не должно ловить «Видишь, как я старался».
+    else if (b.game) out.push(Object.entries(b.game).map(([k, v]) => (k === 'name' ? '«' + v + '»' : v)).flat()
+      .filter((v) => typeof v === 'string').join(' '));
   });
   return out;
 }
