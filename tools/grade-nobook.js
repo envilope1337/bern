@@ -28,7 +28,9 @@ Object.keys(answers).forEach((id) => {
   let lost = 0;
   const flagged = [];
   answers[id].forEach((a) => {
-    const q = quiz.find((item) => item.options.some((o) => o.t === a.answer));
+    // Сначала вопрос с тем же номером: в главах про игры одно название стоит вариантом в нескольких вопросах.
+    const has = (item) => Boolean(item) && item.options.some((o) => o.t === a.answer);
+    const q = has(quiz[a.n - 1]) ? quiz[a.n - 1] : quiz.find(has);
     if (!q) { lost += 1; return; }
     const ok = q.options[q.correct].t === a.answer;
     if (ok) right += 1;
