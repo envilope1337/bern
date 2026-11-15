@@ -9,8 +9,10 @@ const root = process.cwd();
 global.window = global;
 global.self = global;
 vm.runInThisContext(fs.readFileSync(path.join(root, 'content', 'book.js'), 'utf8'));
-vm.runInThisContext(fs.readFileSync(path.join(root, 'content', 'files.js'), 'utf8'));
-BOOK_FILES.forEach((id) => vm.runInThisContext(fs.readFileSync(path.join(root, 'content', id + '.js'), 'utf8')));
+// Все файлы глав из папки, а не из списка: новую главу проверяют до подключения к странице.
+fs.readdirSync(path.join(root, 'content'))
+  .filter((f) => f.endsWith('.js') && f !== 'book.js' && f !== 'files.js')
+  .forEach((f) => vm.runInThisContext(fs.readFileSync(path.join(root, 'content', f), 'utf8')));
 
 const answers = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 // Брак — подсказки формы. Сюжет ситуации обязан показывать понятие, это не брак.
