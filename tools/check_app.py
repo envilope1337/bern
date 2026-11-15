@@ -129,7 +129,8 @@ def run_part(part, base, shots):
                 expect(page.locator("h1")).to_be_visible()
                 info = page.evaluate(INFO_JS)
                 uid, n, cards = info["id"], info["quiz"], info["cards"]
-                index = len(info["ids"]) - 1
+                # Строку главы ищем по ссылке: между главами на главной стоят строки тестов по разделам.
+                row_meta = page.locator(f'a.row[href="#/u/{uid}/notes"] .row-meta')
                 expect(page.locator("h1")).to_have_text(info["book"])
                 expect(page.locator(".today")).to_contain_text("Повторять пока нечего")
                 expect(page.locator(".row-meta").first).to_have_text("ещё не начата")
@@ -275,7 +276,7 @@ def run_part(part, base, shots):
                 # главная с прогрессом, общее повторение
                 page.get_by_role("link", name="← Все главы").click()
                 done = f"конспект прочитан, тест {n - 1} из {n}"
-                expect(page.locator(".row-meta").nth(index)).to_have_text(done + ", карточки повторены")
+                expect(row_meta).to_have_text(done + ", карточки повторены")
                 page.evaluate(
                     """(ids) => {
                       const s = JSON.parse(localStorage.getItem('bern-progress-v1'));
@@ -286,7 +287,7 @@ def run_part(part, base, shots):
                 )
                 page.reload()
                 expect(page.locator(".today .btn")).to_have_text("Повторить 2 карточки")
-                expect(page.locator(".row-meta").nth(index)).to_have_text(done + ", повторить 2 карточки")
+                expect(row_meta).to_have_text(done + ", повторить 2 карточки")
                 step("07-home-progress")
                 page.locator(".today .btn").click()
                 expect(page.locator("h1")).to_have_text("Повторение карточек")
